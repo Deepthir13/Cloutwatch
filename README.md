@@ -1,190 +1,220 @@
-# Creator IQ — Creator Investment Intelligence Platform
+# Cloutwatch
 
-Creator IQ is an AI-powered internal tool built for teams that manage creator/influencer partnerships. Instead of manually pulling data and writing briefs, the platform sends your creator data to specialized AI agents that analyze ROI, summarize meeting notes, and generate pre-meeting intelligence — all in one place.
+**Creator Investment Intelligence Platform**
 
----
+Next.js dashboard for creator partnership teams : ROI analytics, multi-agent AI workflows, meeting intelligence, and client comms via Gmail. Role-separated employee and brand client experiences behind Google OAuth.
 
-## What Problem Does This Solve?
-
-Managing creator partnerships involves a lot of repetitive, context-heavy work:
-- Estimating whether a creator deal is worth the investment
-- Pulling action items out of long call recordings or notes
-- Researching a creator before a meeting
-
-Creator IQ automates each of these tasks using dedicated AI agents powered by Claude (Anthropic's LLM), surfacing the right intelligence at the right moment.
+**Repo:** [github.com/Deepthir13/Cloutwatch](https://github.com/Deepthir13/Cloutwatch)
 
 ---
 
-## The Three AI Modules (Agents)
+## What It Does
 
-Each module in the platform is backed by a separate AI agent with a specific job:
-
-| Module | Agent's Job | What You Get |
+| Module | Route | Summary |
 |---|---|---|
-| **ROI Analyzer** | Takes creator performance data (CSV upload) and models projected return on investment | Revenue forecasts, risk scores, investment recommendations |
-| **Meeting Notes** | Processes raw call notes or transcripts | Structured list of decisions made, risks flagged, and follow-up actions |
-| **Pre-Meeting Brief** | Pulls creator context before a scheduled call | A one-page brief: audience profile, past performance, talking points |
+| **ROI Analyzer** | `/roi-analyzer` | KPIs, Recharts, creator ranking from CSV data |
+| **Creator Picks** | `/roi-analyzer/agents` | Scout → Risk → Strategist AI pipeline (NDJSON stream) |
+| **Meeting Notes** | `/meeting-notes` | Paste notes → AI extracts decisions, tasks, themes |
+| **Pre-Meeting Brief** | `/pre-meeting-brief` | Performance deltas + AI meeting brief |
+| **Brand Portal** | `/brand-portal` | Read-only client view (KPIs, charts, digest feed) |
+| **Data Upload** | `/upload` | CSV drag-and-drop with 18-column validation |
+| **Notifications** | Sidebar drawers | Weekly digests + red-flag alerts via Gmail |
 
-### Why Multi-Agent?
+---
 
-Each module is a separate agent rather than one monolithic AI call because:
-- **Separation of concerns** — the ROI agent is tuned for quantitative analysis; the notes agent is tuned for information extraction; the brief agent is tuned for synthesis and summarization.
-- **Independent context windows** — each task gets its own focused prompt and tools without interference from unrelated tasks.
-- **Modular development** — agents can be improved, replaced, or swapped independently.
+## Roles
+
+| Role | Routes | Data |
+|---|---|---|
+| `employee` | All internal tools + notification drawers | Full dataset |
+| `client` | `/brand-portal` only | Filtered to `session.user.brand` |
+
+Login: pick Employee or Brand on `/login` → Google OAuth → JWT with role + brand. User profiles and brand mapping live in `lib/users.ts`.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Browser (Next.js UI)                  │
-│                                                          │
-│   Sidebar Nav → Upload → ROI Analyzer                    │
-│                       → Meeting Notes                    │
-│                       → Pre-Meeting Brief                │
-└────────────────────────┬────────────────────────────────┘
-                         │  HTTP requests
-┌────────────────────────▼────────────────────────────────┐
-│              Next.js API Route Handlers                  │
-│              (app/api/* — server-side)                   │
-│                                                          │
-│   /api/analyze   → ROI Agent                             │
-│   /api/meetings  → Notes Extraction Agent                │
-│   /api/brief     → Brief Generation Agent                │
-│   /api/upload    → CSV ingestion                         │
-│   /api/data      → Creator dataset                       │
-└────────────────────────┬────────────────────────────────┘
-                         │  Anthropic SDK calls
-┌────────────────────────▼────────────────────────────────┐
-│                  Claude (Anthropic API)                  │
-│                                                          │
-│   Each agent runs with its own:                          │
-│   - System prompt (defines its role and output format)   │
-│   - Tool definitions (structured data extraction)        │
-│   - User message (the uploaded data or pasted notes)     │
-└─────────────────────────────────────────────────────────┘
+Browser (React + Recharts)
+        │ HTTP / NDJSON
+Next.js API Routes (app/api/*)
+        │
+   ┌────┴────┐
+Claude      Google OAuth + Gmail
+(opus-4-6)  (NextAuth JWT)
+        │
+In-memory stores (globalThis)
+dataStore · meetingStore · notificationStore · digestStore
 ```
 
-**Data flow for a typical interaction:**
-1. User uploads a CSV of creator metrics via `/upload`
-2. PapaParse parses the CSV client-side
-3. Parsed data is sent to the relevant API route
-4. The API route calls Claude with a structured prompt + data
-5. Claude's response is returned and rendered using Recharts (for charts) or as structured text
+**No database.** All server state is in-memory — lost on restart. Agent outputs persist in browser `localStorage` only.
+
+**Auth flow:** `/login` → set `login-as` cookie → Google OAuth → JWT populated with role/brand → cookie cleared.
+
+**Middleware** protects employee + client routes. Clients blocked from employee pages → `/brand-portal`. Employees blocked from portal → `/roi-analyzer`.
 
 ---
 
-## Tech Stack
+## AI Agents
 
-| Layer | Technology | Why |
+Model: `claude-opus-4-6` · SDK: `@anthropic-ai/sdk` · Data to Claude: markdown tables from CSV rows
+
+| Agent | Job | Output |
 |---|---|---|
-| **Framework** | Next.js 14 (App Router) | File-based routing, server components, API routes in one codebase |
-| **Language** | TypeScript | Type safety across frontend and API layer |
-| **AI / LLM** | Anthropic Claude (via `anthropic` SDK) | Powers all three analysis agents |
-| **Styling** | Tailwind CSS | Utility-first, fast to iterate on dark-themed UI |
-| **Data Parsing** | PapaParse | CSV uploads from creator data exports |
-| **Charts** | Recharts | ROI projections and performance visualizations |
-| **Auth (planned)** | NextAuth.js + Google OAuth | Team login |
-| **Fonts** | Space Grotesk (sans) + JetBrains Mono (mono) | Technical, terminal-style aesthetic |
+| **Scout** | Rank creators, tier mix, watch list | Top 5 table + recommendations |
+| **Risk** | Flag anomalies, brand safety | GREEN/AMBER/RED per creator + campaign score |
+| **Strategist** | Final investment brief | Budget split, EMV range, talking points |
+
+Pipeline: `POST /api/agents` streams NDJSON events (`scout` → `risk` → `strategy` → `complete`).
+
+RED flags auto-create sidebar alerts + optional Gmail alert to brand client.
+
+Other AI routes: `POST /api/meetings` (note extraction), `POST /api/brief` (pre-meeting brief). Legacy `POST /api/analyze` exists but is not wired to UI.
+
+---
+
+## Key Metrics & Scoring
+
+| Metric | Meaning |
+|---|---|
+| **EMV** | Earned media value ($) |
+| **CPE** | Cost per engagement — lower is better |
+| **Eng Rate** | Engagement rate (%) |
+| **Sentiment** | Score 0–1 |
+| **Brand Fit** | Historical alignment (0–10) |
+| **Fake Follower Flag** | Boolean — −15 penalty in ranking |
+
+**Composite ranking score:**
+```
+eng_rate×0.30 + norm(EMV)×0.25 + norm(CPE inverted)×0.20
++ sentiment×100×0.15 + brand_fit×10×0.10 − (fake_flag ? 15 : 0)
+```
+
+KPI deltas compare current vs `prev_*` columns. CPE uses inverted positive logic.
 
 ---
 
 ## Project Structure
 
 ```
-creator-iq/
-├── app/
-│   ├── layout.tsx                # Root layout — wraps all pages with the sidebar
-│   ├── page.tsx                  # Home / Command Center — links to all three modules
-│   ├── globals.css               # Global styles and CSS variables
-│   └── api/
-│       ├── analyze/route.ts      # ROI Agent — AI recommendation generation
-│       ├── meetings/route.ts     # Notes Agent — meeting note storage & extraction
-│       ├── brief/route.ts        # Brief Agent — pre-meeting brief generation
-│       ├── upload/route.ts       # CSV ingestion
-│       └── data/route.ts         # Creator dataset
-├── components/
-│   ├── layout/
-│   │   └── Sidebar.tsx           # Fixed left nav — links to all modules
-│   └── ui/
-│       └── PageHeader.tsx        # Reusable page header with badge/subtitle
-├── public/
-│   └── mock_campaigns.csv        # Sample creator dataset (fallback)
-├── tailwind.config.ts            # Custom dark theme + color tokens
-├── package.json
-└── .env.local                    # API keys (not committed)
+app/
+├── page.tsx                  # Command Center
+├── login/                    # Role selection + Google sign-in
+├── upload/                   # CSV upload
+├── roi-analyzer/             # ROI dashboard + /agents (Creator Picks)
+├── meeting-notes/            # Note extraction
+├── pre-meeting-brief/        # Brief generation
+├── brand-portal/             # Client read-only portal
+└── api/                      # All server routes (see API table above)
+
+components/
+├── layout/                   # AppShell, Sidebar, TopBar
+├── agents/                   # CreatorAgentWorkflow
+└── ui/                       # PageHeader, AnalysisCard, ErrorCard, EmailChipSelector
+
+lib/
+├── auth.ts · users.ts        # NextAuth + role resolution
+├── agents.ts                 # Scout/Risk/Strategist runners
+├── dataStore.ts              # In-memory creator data
+├── meetingStore.ts           # Meeting notes
+├── notificationStore.ts      # Digests + red flags
+├── digestStore.ts            # Sent digest history
+├── gmail.ts                  # Email templates + Gmail send
+└── anthropicServer.ts        # API key helper
+
+middleware.ts                 # Auth gating + role redirects
+public/mock_campaigns.csv     # Default sample dataset
+.env.example                  # Env template (never commit .env.local)
 ```
 
 ---
 
-## Getting Started
+## Concepts Touched
 
-### Prerequisites
-
-- Node.js 20+
-- An [Anthropic API key](https://console.anthropic.com/)
-
-### Installation
-
-```bash
-git clone https://github.com/Deepthir13/Cloutwatch.git
-cd Cloutwatch
-npm install
-```
-
-### Environment Variables
-
-Create a `.env.local` file at the root:
-
-```env
-ANTHROPIC_API_KEY=your-real-key
-```
-
-The AI routes read `process.env.ANTHROPIC_API_KEY`.
-
-### Run the Dev Server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
----
-
-## URL Structure
-
-| Route | Purpose |
+| Concept | Where It Shows Up |
 |---|---|
-| `/` | Home dashboard / Command Center |
-| `/upload` | CSV upload, validation, and preview |
-| `/roi-analyzer` | Creator ROI metrics, charts, and AI recommendations |
-| `/meeting-notes` | Raw meeting notes extraction and saved notes log |
-| `/pre-meeting-brief` | Creator deltas and AI meeting brief generation |
-| `/api/data` | Current creator dataset |
-| `/api/upload` | Upload or clear custom creator data |
-| `/api/analyze` | ROI recommendation generation |
-| `/api/meetings` | Meeting note storage and extraction |
-| `/api/brief` | Pre-meeting brief generation |
+| **End-to-End AI System Architecture** | CSV data → markdown table serialization → sequential agent pipeline → NDJSON stream → live UI rendering → red-flag side effects → Gmail alerts; same pattern for notes extraction and pre-meeting briefs |
+| **Multi-Agent AI Orchestration** | Scout → Risk → Strategist pipeline in `/api/agents`, each with its own system prompt and output schema |
+| **LLM Integration (Claude)** | Meeting extraction, pre-meeting briefs, creator ranking analysis via Anthropic SDK |
+| **Prompt Engineering** | Role-specific system prompts per agent; structured markdown + JSON output contracts |
+| **NDJSON Streaming** | Agent pipeline streams progressive events to the UI without waiting for full completion |
+| **OAuth 2.0 & JWT Sessions** | Google sign-in, token refresh, role/brand embedded in JWT via NextAuth |
+| **Role-Based Access Control (RBAC)** | Employee vs client route gating in middleware + API session checks |
+| **In-Memory Singleton Stores** | `globalThis`-backed stores for creator data, notes, digests, and alerts |
+| **Composite Scoring** | Weighted creator ranking formula across engagement, EMV, CPE, sentiment, and brand fit |
+| **Period-over-Period Analytics** | KPI deltas comparing current campaign metrics vs `prev_*` columns |
+| **HTML Email Templating** | Branded weekly digest and red-flag alert emails sent via Gmail API |
+| **CSV Ingestion & Validation** | Client-side PapaParse upload with 18-column schema enforcement |
+| **Interactive Data Visualization** | Recharts scatter, bar, and ranking charts with click-to-insight readouts |
+
+---
+
+## Tech Stack
+
+| Layer | Tech |
+|---|---|
+| Framework | Next.js 14 App Router, React 18, TypeScript 5 |
+| AI | Anthropic SDK — `claude-opus-4-6` |
+| Auth | NextAuth.js 4 + Google OAuth (JWT, token refresh) |
+| Email | Google Gmail API via `googleapis` |
+| CSV | PapaParse |
+| Charts | Recharts 3 |
+| Styling | Tailwind CSS 3.4 + `@tailwindcss/typography` |
+| Fonts | Space Grotesk (UI) · JetBrains Mono (labels/nav) |
+
+---
+
+## API Routes
+
+| Route | Methods | Purpose |
+|---|---|---|
+| `/api/auth/[...nextauth]` | GET, POST | Google OAuth + JWT sessions |
+| `/api/auth/login-as` | POST | Set pre-OAuth role cookie |
+| `/api/data` | GET | Creator dataset (brand-filtered for clients) |
+| `/api/upload` | POST, DELETE | Store / clear uploaded CSV |
+| `/api/agents` | POST | Multi-agent pipeline (NDJSON stream) |
+| `/api/meetings` | GET, POST, DELETE | Meeting notes CRUD + AI extraction |
+| `/api/brief` | POST | Pre-meeting brief generation |
+| `/api/notifications` | GET, PATCH, DELETE | Pending digests + red-flag alerts |
+| `/api/digests` | GET | Sent digest history (brand portal) |
+| `/api/email/weekly` | POST | Send weekly digest via Gmail |
+| `/api/email/redflag` | POST | Send red-flag alert via Gmail |
+| `/api/emailbook` | GET, POST, PATCH, DELETE | Saved email recipients |
+| `/api/cron/weekly` | GET | Queue digests per brand (`x-cron-secret` header) |
+
+---
+
+## Data & Storage
+
+| Store | File | Contents |
+|---|---|---|
+| Creator data | `lib/dataStore.ts` | CSV rows (upload or mock fallback) |
+| Meeting notes | `lib/meetingStore.ts` | AI-extracted notes |
+| Notifications | `lib/notificationStore.ts` | Pending/sent digests + red flags |
+| Sent digests | `lib/digestStore.ts` | Digest history for brand portal |
+| Email book | `lib/emailBook.ts` | Saved recipient addresses |
+
+Priority: uploaded CSV → `public/mock_campaigns.csv`. Seeds demo data on boot via `seedNotifications()` + `seedRedFlags()`.
 
 ---
 
 ## Design System
 
-The UI uses a deliberate dark terminal aesthetic:
+Dark terminal aesthetic — near-black backgrounds, neon green accent (`#1aff66`), semantic red/amber for risk states.
 
-| Token | Color | Usage |
-|---|---|---|
-| `bg-base` | `#0a0a0a` | Page background |
-| `bg-surface` | `#111111` | Sidebar background |
-| `bg-card` | `#161616` | Module cards |
-| `green-primary` | `#1aff66` | Active states, brand accent |
-| `red-flag` | `#ff4444` | Risk indicators |
-| `amber-warn` | `#ffaa00` | Warning signals |
+| Token | Usage |
+|---|---|
+| `bg-base` / `bg-card` | Page / card backgrounds |
+| `green-primary` | Accent, active nav, CTAs |
+| `red-flag` / `amber-warn` | Risk badges, warnings |
+| Space Grotesk | Body + headings |
+| JetBrains Mono | Nav, badges, KPI labels |
+
+Layout: 220px fixed sidebar · 480px slide-in notification drawers · `ml-[220px] pt-24` main content offset.
 
 ---
 
-## Adding Real Data
+## License
 
-Use `/upload` to upload a CSV with the required columns, or replace `public/mock_campaigns.csv` with a real dataset using the same column format. The app uses uploaded data first, then falls back to the mock CSV.
+Private project. All rights reserved.
