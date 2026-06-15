@@ -176,12 +176,6 @@ export function Sidebar() {
     </div>`;
   }
 
-  function limitWords(text: string, maxWords: number) {
-    const words = text.trim().split(/\s+/);
-
-    return words.length > maxWords ? words.slice(0, maxWords).join(" ") : text.trim();
-  }
-
   function makeClientEmailDraft(brand: string, rawText: string) {
     if (/^hi\s+/i.test(rawText) && rawText.includes("\n- ")) {
       return rawText;
@@ -266,17 +260,11 @@ export function Sidebar() {
       .replace(/\s+/g, " ")
       .trim();
     const points = cleaned
-      .split(/\s*(?:\d+\.\s+|[-•]\s+)/)
+      .split(/\s*;\s+|\s*(?:\d+\.\s+|[-•]\s+)/)
       .map((point) => point.trim())
       .filter(Boolean)
       .slice(0, 3)
-      .map((point) => {
-        const sentence = point
-          .split(/\s+[—-]\s+|(?<=[.!?])\s+/)[0]
-          ?.replace(/\.$/, "") ?? point;
-
-        return limitWords(sentence, 14);
-      });
+      .map((point) => point.replace(/\.$/, ""));
 
     return points.length > 0
       ? points

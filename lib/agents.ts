@@ -100,7 +100,7 @@ Full creator dataset:
 ${creatorMarkdownTable}
 
 Return structured markdown with exactly these sections:
-1. Top 5 ranked creators as a markdown table with columns: rank, handle, tier, platform, why they fit, predicted EMV range. Keep "why they fit" to exactly 2-3 short semicolon-separated points, max 8 words per point. No paragraphs.
+1. Top 5 ranked creators as a markdown table with columns: rank, handle, tier, platform, why they fit, predicted EMV range. In "why they fit", write exactly 2-3 complete points separated by semicolons only. Each point must be a full readable phrase (max 12 words). Keep decimals intact (e.g. 0.84, $0.05, 8.8%). No line breaks inside cells.
 2. Recommended tier mix, using exact percentages that add to 100%. Keep each rationale to 1 concise sentence.
 3. One creator to watch but not yet commit to, in 1 concise sentence`,
   });
@@ -122,7 +122,7 @@ Full creator data for the shortlisted creators:
 ${shortlistedCreatorMarkdownTable}
 
 Return structured markdown with exactly these sections:
-1. Risk level per creator: GREEN / AMBER / RED with one-line reason, max 14 words per creator
+1. Risk level per creator as a markdown table with columns: Creator, Risk Level, Reason. Risk Level must be GREEN, AMBER, or RED. In Reason, write 2-3 complete points separated by semicolons only. Each point must be a full readable phrase (max 14 words). Keep decimals and ratios intact (e.g. 0.84, 3.4x, $0.05). No truncated phrases.
 2. Overall campaign risk score: LOW / MEDIUM / HIGH
 3. Any creator that should be immediately removed and why, max 1 concise sentence
 4. One systemic risk across the whole shortlist if any, max 1 concise sentence`,
@@ -152,7 +152,7 @@ Risk Agent output:
 ${riskOutput}
 
 Return the final brief with exactly these sections:
-1. Final recommended creator list after the risk filter
+1. Final recommended creator list after the risk filter as a markdown table with columns: Priority, Creator, Tier, Platform, Status, Rationale. In Rationale, write 2-3 complete points separated by semicolons only. Each point must be a full readable phrase (max 14 words). Keep decimals intact (e.g. 0.84, $0.05, 8.8%). No truncated phrases or half-sentences.
 2. Budget split across tiers with exact percentages
 3. Expected blended EMV range
 4. 3 things to say in the client meeting, each as a short bullet

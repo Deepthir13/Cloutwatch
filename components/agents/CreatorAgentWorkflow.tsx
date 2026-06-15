@@ -319,20 +319,36 @@ function renderHighlightedText(text: string) {
 }
 
 function splitReasonIntoPoints(value: string) {
-  const normalized = value
-    .replace(/\s+[–—]\s+/g, ". ")
-    .replace(/;\s+/g, ". ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const sentenceMatches = normalized.match(/[^.!?]+(?:[.!?]+|$)/g) ?? [normalized];
+  const cleaned = cleanMarkdown(value).replace(/\s+/g, " ").trim();
 
-  return sentenceMatches
-    .map((sentence) => sentence.trim().replace(/[.!?]+$/, ""))
-    .filter(Boolean)
-    .slice(0, 3)
-    .map((sentence) =>
-      sentence.length > 96 ? `${sentence.slice(0, 93).trim()}...` : sentence,
-    );
+  if (!cleaned) {
+    return [];
+  }
+
+  const bySemicolon = cleaned.split(/\s*;\s+/).map((part) => part.trim()).filter(Boolean);
+  if (bySemicolon.length > 1) {
+    return bySemicolon.slice(0, 4);
+  }
+
+  const byBullet = cleaned
+    .split(/\s*(?:\d+\.\s+|[-•]\s+)/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (byBullet.length > 1) {
+    return byBullet.slice(0, 4);
+  }
+
+  // Split on real sentence ends only — never break decimals like 0.84 or $0.05
+  const bySentence = cleaned
+    .split(/\.\s+(?=[A-Z(])/)
+    .map((part) => part.trim().replace(/\.$/, ""))
+    .filter(Boolean);
+
+  if (bySentence.length > 1) {
+    return bySentence.slice(0, 4);
+  }
+
+  return [cleaned];
 }
 
 function RenderCell({
@@ -368,7 +384,7 @@ function RenderCell({
               className="flex gap-2 text-sm leading-6 text-grey-100"
             >
               <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-grey-500" />
-              <span>{renderHighlightedText(point)}</span>
+              <span className="break-words">{renderHighlightedText(point)}</span>
             </li>
           ))}
         </ul>
@@ -462,8 +478,8 @@ function OutputTable({
       return `${base} whitespace-nowrap font-semibold`;
     }
 
-    if (/why|fit|rationale|reason/.test(normalizedHeader)) {
-      return `${base} min-w-[320px] max-w-[520px]`;
+    if (/why|fit|rationale|reason|status/.test(normalizedHeader)) {
+      return `${base} min-w-[380px] max-w-[640px] break-words`;
     }
 
     return base;
