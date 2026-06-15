@@ -236,7 +236,7 @@ export function buildWeeklyDigestText(brand: string, data: object) {
           .join("\n")
       : "- Next step: no open action items found.",
     "Best,",
-    "Creator IQ Team",
+    "Cloutwatch Team",
   ].join("\n\n");
 }
 
@@ -261,7 +261,7 @@ export function buildWeeklyDigestHtml(brand: string, data: object) {
   <div style="margin:0;padding:24px;background:#f4f7f5;font-family:Arial,Helvetica,sans-serif;color:#151515;">
     <div style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #dce5df;border-radius:18px;overflow:hidden;">
       <div style="padding:28px;background:#0a0a0a;color:#f0f0f0;">
-        <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#1aff66;font-weight:700;">Creator IQ Weekly</div>
+        <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#1aff66;font-weight:700;">Cloutwatch Weekly</div>
         <h1 style="margin:10px 0 0;font-size:28px;line-height:1.2;color:#1aff66;">${escapeHtml(
           brand,
         )} creator update</h1>
@@ -322,7 +322,7 @@ export function buildWeeklyDigestHtml(brand: string, data: object) {
         </section>
       </div>
       <div style="padding:18px 26px;background:#f4f7f5;color:#555555;font-size:12px;">
-        Powered by Creator IQ · Automated weekly update
+        Powered by Cloutwatch · Automated weekly update
       </div>
     </div>
   </div>`;

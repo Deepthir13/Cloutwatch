@@ -166,7 +166,7 @@ export function Sidebar() {
     return `<div style="margin:0;padding:24px;background:#f4f7f5;font-family:Arial,Helvetica,sans-serif;color:#151515;">
       <div style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #dce5df;border-radius:18px;overflow:hidden;">
         <div style="padding:24px;background:#0a0a0a;color:#f0f0f0;">
-          <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#1aff66;font-weight:700;">Creator IQ Weekly</div>
+          <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#1aff66;font-weight:700;">Cloutwatch Weekly</div>
           <h1 style="margin:10px 0 0;font-size:24px;line-height:1.25;color:#1aff66;">${escapeHtml(
             subject,
           )}</h1>
@@ -245,7 +245,7 @@ export function Sidebar() {
       "Here is this week's creator performance update:",
       finalPoints.map((point) => `- ${point}`).join("\n"),
       "Best,",
-      "Creator IQ Team",
+      "Cloutwatch Team",
     ].join("\n\n");
   }
 

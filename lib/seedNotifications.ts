@@ -17,7 +17,7 @@ function digestHtml({
   <div style="margin:0;padding:24px;background:#f4f7f5;font-family:Arial,Helvetica,sans-serif;color:#151515;">
     <div style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #dce5df;border-radius:18px;overflow:hidden;">
       <div style="padding:28px;background:#0a0a0a;color:#f0f0f0;">
-        <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#1aff66;font-weight:700;">Creator IQ Weekly</div>
+        <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#1aff66;font-weight:700;">Cloutwatch Weekly</div>
         <h1 style="margin:10px 0 0;font-size:28px;line-height:1.2;color:#1aff66;">${brand} creator update</h1>
         <p style="margin:8px 0 0;color:#a0a0a0;">June 14, 2026</p>
       </div>
@@ -40,7 +40,7 @@ function digestHtml({
         </section>
       </div>
       <div style="padding:18px 26px;background:#f4f7f5;color:#555555;font-size:12px;">
-        Powered by Creator IQ
+        Powered by Cloutwatch
       </div>
     </div>
   </div>`;
@@ -71,7 +71,7 @@ function digestText({
     `- Roster note: ${stripHtml(highlight)}`,
     `- Next step: ${stripHtml(actionItem)}`,
     "Best,",
-    "Creator IQ Team",
+    "Cloutwatch Team",
   ].join("\n\n");
 }
 
