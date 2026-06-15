@@ -2,9 +2,7 @@
 
 **Creator Investment Intelligence Platform**
 
-Next.js dashboard for creator partnership teams — ROI analytics, multi-agent AI workflows, meeting intelligence, and client comms via Gmail. Role-separated employee and brand client experiences behind Google OAuth.
-
-**Repo:** [github.com/Deepthir13/Cloutwatch](https://github.com/Deepthir13/Cloutwatch)
+Next.js dashboard for creator partnership teams : ROI analytics, multi-agent AI workflows, meeting intelligence, and client comms via Gmail. Role-separated employee and brand client experiences behind Google OAuth.
 
 ---
 
