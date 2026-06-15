@@ -71,7 +71,7 @@ const goals = [
 ];
 
 const tiers = ["nano", "micro", "macro", "mega"];
-const savedAgentRunPrefix = "cloutwatch:agent-run:";
+const savedAgentRunPrefix = "creator-iq:agent-run:";
 
 const agentSteps: {
   id: AgentId;
